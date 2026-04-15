@@ -1,0 +1,27 @@
+{
+  "name": "chaincraft",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An agent workbench for on-chain decisions.",
+  "bin": {
+    "chaincraft": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node src/cli.ts",
+    "demo": "node src/cli.ts explain --tx fixtures/fourmeme-transfer.json --wallet 0xWallet000000000000000000000000000000000001",
+    "skills": "node src/cli.ts skills",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts"
+  },
+  "engines": {
+    "node": ">=22.6"
+  },
+  "dependencies": {
+    "undici": "^7.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "chainId": "bsc-mainnet",
+  "hash": "0xfourmeme000000000000000000000000000000000000000000000000000000000001",
+  "blockNumber": "49800123",
+  "from": "0xWallet000000000000000000000000000000000001",
+  "to": "0xFourMemeRouter0000000000000000000000000001",
+  "valueWei": "0",
+  "method": "transfer",
+  "tokenTransfers": [
+    {
+      "tokenAddress": "0xToken000000000000000000000000000000000001",
+      "tokenSymbol": "MEME",
+      "tokenDecimals": 18,
+      "from": "0xWallet000000000000000000000000000000000001",
+      "to": "0xRecipient000000000000000000000000000000001",
+      "amount": "1200"
+    }
+  ]
+}
