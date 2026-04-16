@@ -62,7 +62,9 @@ export const fourMemeExplainTokenTxTool: ToolDefinition<FourMemeExplainInput, Fo
 
 /** 核心分析函数，保持纯函数形态，方便测试和未来复用到 Web UI。 */
 export function analyzeFourMemeTokenTx(input: FourMemeExplainInput): FourMemeTokenTxExplanation {
-  const normalizedWallet = normalizeAddress(input.walletAddress);
+  // 用户只问“这个 tx 是啥意思”时，默认从交易发起者视角解释，避免输出一堆 neutral movement。
+  const focusedWallet = input.walletAddress ?? input.transaction.from;
+  const normalizedWallet = normalizeAddress(focusedWallet);
   const normalizedToken = normalizeAddress(input.tokenAddress);
   const relevantTransfers = input.transaction.tokenTransfers.filter((transfer) => {
     // 没有指定 token 时分析全部 token transfer。
@@ -99,7 +101,7 @@ export function analyzeFourMemeTokenTx(input: FourMemeExplainInput): FourMemeTok
     protocol: "fourmeme",
     txHash: input.transaction.hash,
     chainId: input.transaction.chainId,
-    walletAddress: input.walletAddress,
+    walletAddress: focusedWallet,
     primaryAction,
     summary,
     movements,
@@ -174,9 +176,10 @@ function buildSummary(
   primaryAction: FourMemeTokenTxExplanation["primaryAction"],
   movements: TokenMovement[],
 ): string {
-  const firstMovement = movements[0];
-  const movementText = firstMovement
-    ? `${firstMovement.amount} ${firstMovement.tokenSymbol} ${firstMovement.direction}`
+  // 优先展示和关注钱包有关的 movement，避免 neutral movement 抢走摘要主语。
+  const primaryMovement = movements.find((movement) => movement.direction !== "neutral") ?? movements[0];
+  const movementText = primaryMovement
+    ? `${primaryMovement.amount} ${primaryMovement.tokenSymbol} ${primaryMovement.direction}`
     : "no token transfer detected";
 
   return `${txHash} looks like ${primaryAction.replaceAll("_", " ")}: ${movementText}.`;

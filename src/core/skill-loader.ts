@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import type { SkillManifest, SkillSafetyPolicy } from "./types.ts";
+import type { ChainId, SkillManifest, SkillSafetyPolicy } from "./types.ts";
 
 /** 扫描 skills 根目录并加载每个子目录中的 SKILL.md。 */
 export async function loadSkills(skillsRoot: string): Promise<SkillManifest[]> {
@@ -38,11 +38,33 @@ export function parseSkill(id: string, directory: string, raw: string): SkillMan
     id,
     name,
     description,
+    domains: readFrontmatterStringList(parsed.frontmatter.get("domains")),
+    protocols: readFrontmatterStringList(parsed.frontmatter.get("protocols")),
+    chains: readFrontmatterChainList(parsed.frontmatter.get("chains")),
+    actions: readFrontmatterStringList(parsed.frontmatter.get("actions")),
+    triggers: readFrontmatterStringList(parsed.frontmatter.get("triggers")),
+    inputs: readFrontmatterStringList(parsed.frontmatter.get("inputs")),
     tools: readFrontmatterStringList(parsed.frontmatter.get("tools")),
     safety: readSkillSafetyPolicy(parsed.frontmatter.get("safety")),
     directory,
     body: parsed.body.trim(),
   };
+}
+
+/** 从 frontmatter value 中读取链 ID 数组，并丢弃当前 runtime 不认识的链名。 */
+function readFrontmatterChainList(value: FrontmatterValue | undefined): ChainId[] {
+  return readFrontmatterStringList(value)
+    .map((chain) => normalizeChainId(chain))
+    .filter((chain): chain is ChainId => chain !== undefined);
+}
+
+/** frontmatter 里的链名需要收窄到 ChainId union，避免随意字符串进入路由逻辑。 */
+function normalizeChainId(value: string): ChainId | undefined {
+  if (value === "bsc-mainnet" || value === "ethereum-mainnet" || value === "base-mainnet" || value === "unknown") {
+    return value;
+  }
+
+  return undefined;
 }
 
 /** frontmatter value 的最小类型集合，覆盖 scalar、list 和一层 object。 */

@@ -56,6 +56,18 @@ export interface SkillManifest {
   name: string;
   /** SKILL.md frontmatter 中的 description，用于 LLM 路由。 */
   description: string;
+  /** skill 适用的业务域，例如 defi、transaction-analysis。 */
+  domains: string[];
+  /** skill 适用的协议或运行层，例如 evm、fourmeme、uniswap。 */
+  protocols: string[];
+  /** skill 支持的链；为空表示不限定链。 */
+  chains: ChainId[];
+  /** skill 可处理的动作，例如 explain_transaction、quote_swap。 */
+  actions: string[];
+  /** skill 的轻量触发词，用于本地候选匹配。 */
+  triggers: string[];
+  /** skill 接受的输入类型，例如 transactionHash、walletAddress。 */
+  inputs: string[];
   /** skill 允许 runtime 调用的 typed tools。 */
   tools: string[];
   /** skill 声明的安全策略，用于阻止签名、广播等危险动作。 */
@@ -254,8 +266,8 @@ export interface LlmClient {
   generate(request: LlmRequest): Promise<LlmResponse>;
 }
 
-/** planner 目前能识别的意图集合。 */
-export type AgentIntent = "skill" | "fourmeme_tx_explain" | "general_chat" | "unsupported";
+/** planner 目前能识别的意图集合；协议细节由 skill metadata 表达，不再放进 intent。 */
+export type AgentIntent = "skill" | "general_chat" | "unsupported";
 
 /** LLM planner 输出的安全计划，必须先解析成结构化对象再执行工具。 */
 export interface AgentPlan {
@@ -279,6 +291,42 @@ export interface AgentAskReply {
   toolCalls: string[];
   /** 结构化调试数据，包含 plan、LLM 原始响应和工具数据。 */
   data: unknown;
+}
+
+/** Agent 从自然语言和 CLI/session 中提取出的通用链上上下文。 */
+export interface AgentInputContext {
+  /** 用户原始自然语言需求。 */
+  prompt: string;
+  /** 当前会话链。 */
+  chainId: ChainId;
+  /** 当前关注钱包。 */
+  walletAddress?: string;
+  /** 明确提供或从 prompt 中识别出的交易哈希。 */
+  transactionHash?: string;
+  /** 明确提供的归一化交易文件路径。 */
+  transactionFilePath?: string;
+  /** 是否已经有调用方传入的归一化交易对象。 */
+  hasNormalizedTransaction: boolean;
+  /** 可选 token 过滤条件。 */
+  tokenAddress?: string;
+  /** prompt 中出现的 EVM 地址，交易哈希不计入这里。 */
+  addresses: string[];
+  /** 从自然语言中推断出的协议提示，例如 evm、fourmeme。 */
+  protocolHints: string[];
+  /** 从自然语言中推断出的动作提示，例如 explain_transaction。 */
+  actionHints: string[];
+  /** 当前可用输入类型，供 skill 匹配和 planner 使用。 */
+  inputTypes: string[];
+}
+
+/** 本地 skill 候选匹配的结果，LLM router 只需要看这个紧凑清单。 */
+export interface SkillCandidate {
+  /** 候选 skill。 */
+  skill: SkillManifest;
+  /** 本地匹配分数，只用于排序和兜底，不代表最终一定选择。 */
+  score: number;
+  /** 命中的原因，debug 和 prompt 都会用到。 */
+  reasons: string[];
 }
 
 /** skill runtime 生成的结构化执行计划。 */

@@ -1,7 +1,39 @@
 ---
 name: FourMeme Token Investigation
 description: Investigate FourMeme token transactions, wallet exposure changes, transfer-vs-sell ambiguity, and follow-up risk checks from normalized BNB Chain transaction data.
+domains:
+  - defi
+  - token-launchpad
+  - transaction-analysis
+protocols:
+  - fourmeme
+chains:
+  - bsc-mainnet
+actions:
+  - explain_transaction
+  - classify_wallet_movement
+  - inspect_token_activity
+triggers:
+  - fourmeme
+  - meme
+  - buy
+  - sell
+  - transfer
+  - 买
+  - 卖
+  - 转出
+  - 转入
+inputs:
+  - transactionHash
+  - normalizedTransactionFile
+  - normalizedTransaction
+  - walletAddress
+  - tokenAddress
 tools:
+  - read_normalized_transaction_file
+  - rpc_get_transaction
+  - rpc_get_transaction_receipt
+  - normalize_evm_transaction
   - decode_transaction
   - fourmeme_explain_token_tx
 safety:
@@ -12,6 +44,8 @@ safety:
 # FourMeme Token Investigation
 
 Use this skill when the user asks about a FourMeme token transaction, token holder movement, whether an address bought, sold, accumulated, distributed, or transferred tokens, or what follow-up checks are useful before copying a trade.
+
+This is a FourMeme-specific layer. If the user only provides a generic EVM transaction hash and does not mention FourMeme, prefer the generic EVM transaction skill first, then escalate here only when tool facts or user intent point to FourMeme.
 
 ## Operating Policy
 
@@ -24,23 +58,27 @@ Use this skill when the user asks about a FourMeme token transaction, token hold
 
 ## Required Inputs
 
-- Transaction hash or normalized transaction data.
+- Transaction hash, normalized transaction file, or already-normalized transaction data.
 - Focus wallet address when the user asks whether a wallet increased or reduced exposure.
 - Token address when the transaction includes multiple token movements and the user cares about one token.
 
 ## Workflow
 
-1. Decode the normalized transaction with `decode_transaction`.
-2. Explain token movements from the focused wallet perspective with `fourmeme_explain_token_tx`.
-3. Classify the focused wallet movement as buy, sell, transfer in, transfer out, contract interaction, or unknown.
-4. Check transfer-vs-sell ambiguity:
+1. If the user provides a normalized transaction file, read it with `read_normalized_transaction_file`.
+2. If the user provides only a transaction hash, fetch the raw transaction with `rpc_get_transaction`.
+3. If the user provides only a transaction hash, fetch the receipt with `rpc_get_transaction_receipt`.
+4. If raw transaction and receipt are available, normalize them with `normalize_evm_transaction`.
+5. Decode the normalized transaction with `decode_transaction`.
+6. Explain token movements from the focused wallet perspective with `fourmeme_explain_token_tx`.
+7. Classify the focused wallet movement as buy, sell, transfer in, transfer out, contract interaction, or unknown.
+8. Check transfer-vs-sell ambiguity:
    - If the focused wallet sends tokens to a plain recipient and no router/pair evidence is available, classify it as transfer out, not sell.
    - If a domain decoder provides a buy/sell hint, explain that the hint came from protocol-level decoding.
    - If the token moved through a router, pair, launchpad, burn address, or exchange, identify that as a follow-up verification need unless a tool already proved it.
-5. Separate facts from inference:
+9. Separate facts from inference:
    - Facts: sender, target, token transfer amount, from/to addresses.
    - Inference: whether the movement looks like accumulation, distribution, routing, or a wallet-to-wallet transfer.
-6. Always include risk notes:
+10. Always include risk notes:
    - This is not a rug-risk verdict.
    - Check recipient identity for transfer-out cases.
    - Check liquidity and holder concentration before copying buys.
