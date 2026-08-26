@@ -2,6 +2,9 @@
 
 Chaincraft is an agent workbench for on-chain decisions.
 
+> **Status:** Active prototype. The current release explains transactions and
+> prepares decisions; it never signs or broadcasts transactions automatically.
+
 The first MVP is intentionally read-only. It can load skills, keep a session, extract generic on-chain inputs from natural language, route through a skill matcher plus LLM, call typed tools, and explain EVM/FourMeme-style transaction data. It does not auto-sign or auto-broadcast transactions.
 
 ## Why FourMeme First
@@ -185,3 +188,19 @@ The LLM can plan tool calls, but the runtime only executes tools that are both l
 - New code should include Chinese comments by default.
 - Public interfaces, modules, safety boundaries, and non-obvious branches should be commented.
 - Comments should explain intent and constraints, not repeat the code line by line.
+
+## Development
+
+Requirements: Node.js 22.6 or newer and pnpm 10.
+
+```sh
+pnpm install
+pnpm typecheck
+pnpm test
+```
+
+CI runs the same type and test checks on every push and pull request.
+
+## License
+
+[MIT](LICENSE)
